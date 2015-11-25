@@ -1,0 +1,35 @@
+/app/src/main/res/drawable
+.gradle
+!settings.gradle
+.DS_Store
+# built application files
+# files for the dex VM
+# Java class files
+
+# generated files
+bin/
+bin
+gen
+/app/src/main/java/com/tomek/luckynumber/rest
+gen/
+  
+# Local configuration file (sdk path, etc)
+*.properties
+  
+# Eclipse project files
+.classpath
+.project
+  
+# Android Studio
+.idea/
+/*/local.properties
+/*/out
+/*/*/build
+build
+/*/*/production
+*.iml
+*.iws
+*.ipr
+/app/libs
+*~
+*.swp
