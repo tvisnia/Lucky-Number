@@ -1,5 +1,7 @@
 package com.tomek.luckynumber;
 
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -11,6 +13,9 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.tomek.luckynumber.model.LuckyNumber;
 
 import java.io.IOException;
 
@@ -32,11 +37,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 new CheckNumber().execute();
-
                 Log.d("onClickpoExeceute", "number : " + luckyNumber + " text : " + luckyText);
 
-                }
+            }
         });
+        checkFirstRun();
     }
 
     class CheckNumber extends AsyncTask<Void, Void, Void> {
@@ -59,8 +64,7 @@ public class MainActivity extends AppCompatActivity {
             String message = "";
             if (luckyNumber == 0) {
                 message = "Błąd !";
-            }
-            else message = "Pomyslnie pobrano numerek !";
+            } else message = "Pomyslnie pobrano numerek !";
             Snackbar.make(fab, message, Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
         }
@@ -86,5 +90,51 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void checkFirstRun() {
+
+        final String PREFS_KEY = "com.tomek.luckynumber";
+        final String PREF_VERSION_CODE_KEY = "version_code";
+        final int DOESNT_EXIST = -1;
+
+        // Get current version code
+        int currentVersionCode = 0;
+        try {
+            currentVersionCode = getPackageManager().getPackageInfo(getPackageName(), PackageManager.PERMISSION_GRANTED)
+                    .versionCode;
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            // handle exception
+            e.printStackTrace();
+            return;
+        }
+
+        // Get saved version code
+        SharedPreferences prefs = getSharedPreferences(PREFS_KEY, MODE_PRIVATE);
+        int savedVersionCode = prefs.getInt(PREF_VERSION_CODE_KEY, DOESNT_EXIST);
+
+        // Check for first run or upgrade
+        if (currentVersionCode == savedVersionCode) {
+            Log.d("LaunchChecker", "onNormalRun");
+            return;
+
+        } else if (savedVersionCode == DOESNT_EXIST) {
+            initDialog();
+            Log.d("LaunchChecker", "onFirstRun");
+
+        } else if (currentVersionCode > savedVersionCode) {
+            Log.d("LaunchChecker", "onUpdateRun");
+
+        }
+
+        // Update the shared preferences with the current version code
+        prefs.edit().putInt(PREF_VERSION_CODE_KEY, currentVersionCode).commit();
+
+    }
+
+    private void initDialog() {
+        MaterialDialog mDialog = new MaterialDialog.Builder(MainActivity.this)
+                .title("Wpisz swój numerek")
+                .build();
     }
 }

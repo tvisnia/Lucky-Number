@@ -1,4 +1,4 @@
-package com.tomek.luckynumber;
+package com.tomek.luckynumber.model;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
