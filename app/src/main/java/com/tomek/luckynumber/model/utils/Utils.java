@@ -1,4 +1,4 @@
-package com.tomek.luckynumber.model;
+package com.tomek.luckynumber.model.utils;
 
 import android.content.Context;
 import android.widget.Toast;

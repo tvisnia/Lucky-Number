@@ -8,6 +8,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
@@ -15,15 +16,21 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.rengwuxian.materialedittext.MaterialEditText;
 import com.tomek.luckynumber.model.LuckyNumber;
+import com.tomek.luckynumber.model.utils.SharedPreferencesUtils;
+import com.tomek.luckynumber.model.utils.Utils;
 
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
+    private MaterialDialog mDialog;
     private TextView luckyText;
+    private int myNumber;
     private int luckyNumber;
     private FloatingActionButton fab;
     private Toolbar toolbar;
+    private MaterialEditText mInputText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,26 +122,60 @@ public class MainActivity extends AppCompatActivity {
 
         // Check for first run or upgrade
         if (currentVersionCode == savedVersionCode) {
+            if (SharedPreferencesUtils.
+                    getIntFromSharedPreference(MainActivity.this, SharedPreferencesUtils.MY_NUMBER) == 0) {
+                initDialog();
+
+            }
             Log.d("LaunchChecker", "onNormalRun");
             return;
-
         } else if (savedVersionCode == DOESNT_EXIST) {
             initDialog();
             Log.d("LaunchChecker", "onFirstRun");
 
         } else if (currentVersionCode > savedVersionCode) {
-            Log.d("LaunchChecker", "onUpdateRun");
+            if (SharedPreferencesUtils.
+                    getIntFromSharedPreference(MainActivity.this, SharedPreferencesUtils.MY_NUMBER) == 0) {
+                initDialog();
+                Log.d("LaunchChecker", "onUpdateRun");
 
+            }
+            // Update the shared preferences with the current version code
+            prefs.edit().putInt(PREF_VERSION_CODE_KEY, currentVersionCode).commit();
         }
-
-        // Update the shared preferences with the current version code
-        prefs.edit().putInt(PREF_VERSION_CODE_KEY, currentVersionCode).commit();
-
     }
 
     private void initDialog() {
-        MaterialDialog mDialog = new MaterialDialog.Builder(MainActivity.this)
+        initInputEditTexT();
+                 mDialog = new MaterialDialog.Builder(MainActivity.this)
                 .title("Wpisz swój numerek")
-                .build();
+                .customView((View) mInputText, true)
+                .positiveText(R.string.ok)
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
+                        myNumber = Integer.valueOf(String.valueOf(mInputText.getText()));
+                        Log.d("Int value of ", "" + myNumber);
+                        if (myNumber < 1 || myNumber > 36) {
+                            Utils.makeShortToast(MainActivity.this, getString(R.string.invalid_number));
+                        } else {
+                            SharedPreferencesUtils
+                                    .putIntInSharedPreferences
+                                            (MainActivity.this, SharedPreferencesUtils.MY_NUMBER, myNumber);
+                            dialog.dismiss();
+                        }
+                        super.onPositive(dialog);
+                    }
+                })
+                .autoDismiss(false)
+                .show();
+    }
+
+    private void initInputEditTexT() {
+        mInputText = new MaterialEditText(this);
+        mInputText.setPaddings(15, 15, 15 ,15);
+        mInputText.setMaxCharacters(2);
+        mInputText.setInputType(InputType.TYPE_CLASS_NUMBER);
+        mInputText.setHint(R.string.input_your_number_hint);
     }
 }

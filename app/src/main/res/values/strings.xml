@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Lucky Number</string>
     <string name="action_settings">Settings</string>
-    <string name="input_your_number_hint">Wpisz tu swój numerek...</string>
+    <string name="input_your_number_hint">(1-36)</string>
+    <string name="ok">Ok</string>
+    <string name="invalid_number">Nieprawidłowy numerek</string>
 </resources>

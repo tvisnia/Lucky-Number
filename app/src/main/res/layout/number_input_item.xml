@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/item_layout"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <com.rengwuxian.materialedittext.MaterialEditText
         android:id="@+id/input_number_item"
         android:layout_margin="15dp"
-        app:met_maxCharacters="20"
+        app:met_maxCharacters="2"
+        android:inputType="number"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/input_your_number_hint"
