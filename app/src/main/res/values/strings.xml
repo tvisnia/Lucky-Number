@@ -4,4 +4,5 @@
     <string name="input_your_number_hint">(1-36)</string>
     <string name="ok">Ok</string>
     <string name="invalid_number">Nieprawidłowy numerek</string>
+    <string name="empty_string" />
 </resources>
