@@ -12,20 +12,25 @@ import java.io.IOException;
  * Created by tomek on 10.12.15.
  */
 public class GetLuckyNumberService extends IntentService {
-    int receivedNumber = 0;
+    private static final String LOG_TAG = GetLuckyNumberService.class.getSimpleName();
+    private int receivedNumber = 0;
 
     public GetLuckyNumberService() {
-        super("GetLuckyNumberService");
+        super(LOG_TAG);
 
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Log.d("GetLuckyNumberService", "onHandleIntent");
+        Log.d(LOG_TAG, getString(R.string.on_intent_log_tag));
         try {
             receivedNumber = LuckyNumber.getLucky();
+
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        finally {
+            Log.d(LOG_TAG, receivedNumber +"");
         }
 
     }

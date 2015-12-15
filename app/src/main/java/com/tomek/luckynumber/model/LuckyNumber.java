@@ -3,6 +3,7 @@ package com.tomek.luckynumber.model;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import java.io.IOException;
+
 import org.jsoup.nodes.Element;
 
 public class LuckyNumber
@@ -23,6 +24,7 @@ public class LuckyNumber
 		String img_number = parseHtml(main_page);
 		return Integer.parseInt(img_number);
 	}
+
 	public static void printLucky()
 	{
 		int lucky = 0;

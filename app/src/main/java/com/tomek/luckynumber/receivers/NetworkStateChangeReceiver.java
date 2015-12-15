@@ -1,10 +1,12 @@
-package com.tomek.luckynumber;
+package com.tomek.luckynumber.receivers;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.util.Log;
+
+import com.tomek.luckynumber.GetLuckyNumberService;
 
 import java.io.IOException;
 
@@ -23,7 +25,7 @@ public class NetworkStateChangeReceiver extends BroadcastReceiver {
         }
     }
 
-    public boolean isOnline() {
+    private boolean isOnline() {
 
         Runtime runtime = Runtime.getRuntime();
         try {
