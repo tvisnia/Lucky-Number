@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -13,6 +14,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
@@ -22,7 +24,7 @@ import android.widget.TextView;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.rengwuxian.materialedittext.MaterialEditText;
 import com.tomek.luckynumber.model.LuckyNumber;
-import com.tomek.luckynumber.model.utils.SharedPreferencesUtils;
+import com.tomek.luckynumber.model.utils.PrefsUtils;
 import com.tomek.luckynumber.model.utils.Utils;
 import com.tomek.luckynumber.receivers.AutoNumberUpdateReceiver;
 
@@ -36,6 +38,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int MAX_CHARACTERS = 2;
     private static final int EDIT_TEXT_VIEW_PADDING = 15;
     private static final int DEFAULT_FLAG = 0;
+    private static final int INTENT_ID = 15;
+    private static final String INTENT_ACTION_ID = "com.tomek.luckynumber.action.alarm";
     private int myNumber;
     private int luckyNumber;
     private MaterialDialog mDialog;
@@ -44,7 +48,9 @@ public class MainActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private MaterialEditText mInputText;
     private AlarmManager alarmMgr;
+    private Intent notifyAutoUpdateReceiver;
     private PendingIntent alarmIntent;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -115,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkFirstRun() {
 
-        final String PREFS_KEY = SharedPreferencesUtils.SHARED_PREFERENCES_KEY;
+        final String PREFS_KEY = PrefsUtils.SHARED_PREFERENCES_KEY;
         final String PREF_VERSION_CODE_KEY = "version_code";
         final int DOESNT_EXIST = -1;
 
@@ -124,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             currentVersionCode = getPackageManager().getPackageInfo(getPackageName(), PackageManager.PERMISSION_GRANTED)
                     .versionCode;
-        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+        } catch (PackageManager.NameNotFoundException e) {
             // handle exception
             e.printStackTrace();
             return;
@@ -136,9 +142,10 @@ public class MainActivity extends AppCompatActivity {
 
         // Check for first run or upgrade
         if (currentVersionCode == savedVersionCode) {
-            if (SharedPreferencesUtils.
-                    getIntFromSharedPreference(MainActivity.this, SharedPreferencesUtils.MY_NUMBER) == 0) {
+            if (PrefsUtils.
+                    getIntFromSharedPreference(MainActivity.this, PrefsUtils.MY_NUMBER_KEY) == 0) {
                 initDialog();
+
             }
             Log.d("LaunchChecker", "onNormalRun");
             return;
@@ -147,33 +154,38 @@ public class MainActivity extends AppCompatActivity {
             Log.d("LaunchChecker", "onFirstRun");
 
         } else if (currentVersionCode > savedVersionCode) {
-            if (SharedPreferencesUtils.
-                    getIntFromSharedPreference(MainActivity.this, SharedPreferencesUtils.MY_NUMBER) == 0) {
+            if (PrefsUtils.
+                    getIntFromSharedPreference(MainActivity.this, PrefsUtils.MY_NUMBER_KEY) == 0) {
                 initDialog();
                 Log.d("LaunchChecker", "onUpdateRun");
 
             }
-            // Update the shared preferences with the current version code
-            prefs.edit().putInt(PREF_VERSION_CODE_KEY, currentVersionCode).commit();
         }
+        // Update the shared preferences with the current version code
+        prefs.edit().putInt(PREF_VERSION_CODE_KEY, currentVersionCode).commit();
     }
 
     private void initDialog() {
         initInputEditTexT();
-                 mDialog = new MaterialDialog.Builder(MainActivity.this)
+        mDialog = new MaterialDialog.Builder(MainActivity.this)
                 .title(R.string.enter_number_title)
                 .customView((View) mInputText, true)
                 .positiveText(R.string.ok)
                 .callback(new MaterialDialog.ButtonCallback() {
                     @Override
                     public void onPositive(MaterialDialog dialog) {
-                        myNumber = Integer.valueOf(String.valueOf(mInputText.getText()));
-                        if (myNumber < 1 || myNumber > 36) {
+                        String mInput = String.valueOf(mInputText.getText());
+                        if (!TextUtils.isEmpty(mInput)) {
+                            myNumber = Integer.valueOf(mInput);
+                        } else
+                            Utils.makeShortToast(MainActivity.this, getString(R.string.invalid_number));
+                        if (myNumber < 1 || myNumber > 36
+                                || TextUtils.isEmpty(String.valueOf(mInputText.getText()))) {
                             Utils.makeShortToast(MainActivity.this, getString(R.string.invalid_number));
                         } else {
-                            SharedPreferencesUtils
+                            PrefsUtils
                                     .putIntInSharedPreferences
-                                            (MainActivity.this, SharedPreferencesUtils.MY_NUMBER, myNumber);
+                                            (MainActivity.this, PrefsUtils.MY_NUMBER_KEY, myNumber);
                             dialog.dismiss();
                         }
                         super.onPositive(dialog);
@@ -194,22 +206,47 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initAlarm() {
-            alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            Intent intent = new Intent(this, AutoNumberUpdateReceiver.class);
-            alarmIntent = PendingIntent.getBroadcast(MainActivity.this, DEFAULT_FLAG, intent, DEFAULT_FLAG);
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(System.currentTimeMillis());
-            calendar.set(Calendar.HOUR_OF_DAY, DEFAULT_ALARM_HOUR);
-            calendar.set(Calendar.MINUTE, DEFAULT_ALARM_MINUTE);
-            alarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
-                    AlarmManager.INTERVAL_DAY, alarmIntent);
-
+        if(!isAlarmSet()) {
+            setAlarm();
+            Log.d("onAlarmReinited", isAlarmSet() + "");
         }
+    }
 
+    private void setAlarm() {
+        long timeInMillis;
+        Calendar currentDate = Calendar.getInstance();
+        alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        notifyAutoUpdateReceiver = new Intent(getApplicationContext(), AutoNumberUpdateReceiver.class);
+        notifyAutoUpdateReceiver.setAction(INTENT_ACTION_ID);
+        notifyAutoUpdateReceiver.setData(Uri.parse("custom://" + INTENT_ACTION_ID));
+        alarmIntent = PendingIntent
+                .getBroadcast(MainActivity.this, INTENT_ID, notifyAutoUpdateReceiver, PendingIntent.FLAG_UPDATE_CURRENT);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.set(Calendar.HOUR_OF_DAY, DEFAULT_ALARM_HOUR);
+        calendar.set(Calendar.MINUTE, DEFAULT_ALARM_MINUTE);
+        if (currentDate.after(calendar)) {
+            timeInMillis = calendar.getTimeInMillis() + 1000*60*60*24; //adds 24 hrs in millis
+        }
+        else timeInMillis = calendar.getTimeInMillis();
+        alarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP, timeInMillis,
+                AlarmManager.INTERVAL_DAY, alarmIntent);
+    }
 
     private void cancelAlarm() {
-        if (alarmMgr!= null) {
-            alarmMgr.cancel(alarmIntent);
-        }
+        Intent notifyAutoUpdateReceiver = new Intent(getApplicationContext(), AutoNumberUpdateReceiver.class);
+        notifyAutoUpdateReceiver.setAction(INTENT_ACTION_ID);
+        notifyAutoUpdateReceiver.setData(Uri.parse("custom://" + INTENT_ACTION_ID));
+        PendingIntent alarmIntent = PendingIntent
+                .getBroadcast(MainActivity.this, INTENT_ID, notifyAutoUpdateReceiver, PendingIntent.FLAG_UPDATE_CURRENT);
+        alarmMgr.cancel(alarmIntent);
+        this.alarmIntent.cancel();
+    }
+
+    private boolean isAlarmSet() {
+        Intent intent = new Intent(getApplicationContext(), AutoNumberUpdateReceiver.class);
+        intent.setAction(INTENT_ACTION_ID);
+        intent.setData(Uri.parse("custom://" + INTENT_ACTION_ID));
+        return (PendingIntent.getBroadcast(getApplicationContext(), INTENT_ID, intent, PendingIntent.FLAG_NO_CREATE) != null);
     }
 }

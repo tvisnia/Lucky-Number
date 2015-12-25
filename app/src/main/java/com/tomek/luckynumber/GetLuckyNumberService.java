@@ -7,6 +7,7 @@ import android.net.ConnectivityManager;
 import android.util.Log;
 
 import com.tomek.luckynumber.model.LuckyNumber;
+import com.tomek.luckynumber.model.utils.PrefsUtils;
 
 import java.io.IOException;
 
@@ -33,6 +34,7 @@ public class GetLuckyNumberService extends IntentService {
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
+                Log.d(LOG_TAG, intent.getStringExtra(PrefsUtils.AUTO_UPDATE_INTENT));
                 Log.d(LOG_TAG, receivedNumber + "");
             }
         }

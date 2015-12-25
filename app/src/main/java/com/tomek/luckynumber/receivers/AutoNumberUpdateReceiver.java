@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.tomek.luckynumber.GetLuckyNumberService;
+import com.tomek.luckynumber.model.utils.PrefsUtils;
 
 import java.util.Calendar;
 
@@ -22,6 +23,7 @@ public class AutoNumberUpdateReceiver extends BroadcastReceiver {
         Log.d("CO TU SIE DZIEJE" , dayOfWeek + " " + isWeekday);
         if (isWeekday) {
             Intent checkForLuckyNumberIntent = new Intent(context, GetLuckyNumberService.class);
+            checkForLuckyNumberIntent.putExtra(PrefsUtils.AUTO_UPDATE_INTENT, PrefsUtils.AUTO_UPDATE_INTENT);
             context.startService(checkForLuckyNumberIntent);
         }
     }
