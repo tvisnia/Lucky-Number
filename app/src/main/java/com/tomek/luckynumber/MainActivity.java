@@ -1,5 +1,9 @@
 package com.tomek.luckynumber;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
@@ -20,22 +24,32 @@ import com.rengwuxian.materialedittext.MaterialEditText;
 import com.tomek.luckynumber.model.LuckyNumber;
 import com.tomek.luckynumber.model.utils.SharedPreferencesUtils;
 import com.tomek.luckynumber.model.utils.Utils;
+import com.tomek.luckynumber.receivers.AutoNumberUpdateReceiver;
 
 import java.io.IOException;
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
-    private MaterialDialog mDialog;
-    private TextView luckyText;
+
+    private static final int DEFAULT_ALARM_HOUR = 15;
+    private static final int DEFAULT_ALARM_MINUTE = 5;
+    private static final int MAX_CHARACTERS = 2;
+    private static final int EDIT_TEXT_VIEW_PADDING = 15;
+    private static final int DEFAULT_FLAG = 0;
     private int myNumber;
     private int luckyNumber;
+    private MaterialDialog mDialog;
+    private TextView luckyText;
     private FloatingActionButton fab;
     private Toolbar toolbar;
     private MaterialEditText mInputText;
-
+    private AlarmManager alarmMgr;
+    private PendingIntent alarmIntent;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        initAlarm();
         luckyText = ((TextView) findViewById(R.id.lucky_text));
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -101,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkFirstRun() {
 
-        final String PREFS_KEY = "com.tomek.luckynumber";
+        final String PREFS_KEY = SharedPreferencesUtils.SHARED_PREFERENCES_KEY;
         final String PREF_VERSION_CODE_KEY = "version_code";
         final int DOESNT_EXIST = -1;
 
@@ -125,7 +139,6 @@ public class MainActivity extends AppCompatActivity {
             if (SharedPreferencesUtils.
                     getIntFromSharedPreference(MainActivity.this, SharedPreferencesUtils.MY_NUMBER) == 0) {
                 initDialog();
-
             }
             Log.d("LaunchChecker", "onNormalRun");
             return;
@@ -148,14 +161,13 @@ public class MainActivity extends AppCompatActivity {
     private void initDialog() {
         initInputEditTexT();
                  mDialog = new MaterialDialog.Builder(MainActivity.this)
-                .title("Wpisz swój numerek")
+                .title(R.string.enter_number_title)
                 .customView((View) mInputText, true)
                 .positiveText(R.string.ok)
                 .callback(new MaterialDialog.ButtonCallback() {
                     @Override
                     public void onPositive(MaterialDialog dialog) {
                         myNumber = Integer.valueOf(String.valueOf(mInputText.getText()));
-                        Log.d("Int value of ", "" + myNumber);
                         if (myNumber < 1 || myNumber > 36) {
                             Utils.makeShortToast(MainActivity.this, getString(R.string.invalid_number));
                         } else {
@@ -168,14 +180,36 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .autoDismiss(false)
+                .cancelable(false)
                 .show();
     }
 
     private void initInputEditTexT() {
         mInputText = new MaterialEditText(this);
-        mInputText.setPaddings(15, 15, 15 ,15);
-        mInputText.setMaxCharacters(2);
+        mInputText.setPaddings(EDIT_TEXT_VIEW_PADDING, EDIT_TEXT_VIEW_PADDING, EDIT_TEXT_VIEW_PADDING,
+                EDIT_TEXT_VIEW_PADDING);
+        mInputText.setMaxCharacters(MAX_CHARACTERS);
         mInputText.setInputType(InputType.TYPE_CLASS_NUMBER);
         mInputText.setHint(R.string.input_your_number_hint);
+    }
+
+    private void initAlarm() {
+            alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            Intent intent = new Intent(this, AutoNumberUpdateReceiver.class);
+            alarmIntent = PendingIntent.getBroadcast(MainActivity.this, DEFAULT_FLAG, intent, DEFAULT_FLAG);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(System.currentTimeMillis());
+            calendar.set(Calendar.HOUR_OF_DAY, DEFAULT_ALARM_HOUR);
+            calendar.set(Calendar.MINUTE, DEFAULT_ALARM_MINUTE);
+            alarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
+                    AlarmManager.INTERVAL_DAY, alarmIntent);
+
+        }
+
+
+    private void cancelAlarm() {
+        if (alarmMgr!= null) {
+            alarmMgr.cancel(alarmIntent);
+        }
     }
 }

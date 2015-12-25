@@ -6,4 +6,5 @@
     <string name="invalid_number">Nieprawidłowy numerek</string>
     <string name="empty_string" />
     <string name="on_intent_log_tag">onHandleIntent</string>
+    <string name="enter_number_title">Wpisz swój numerek</string>
 </resources>

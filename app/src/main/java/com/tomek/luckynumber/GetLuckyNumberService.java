@@ -1,7 +1,9 @@
 package com.tomek.luckynumber;
 
 import android.app.IntentService;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.util.Log;
 
 import com.tomek.luckynumber.model.LuckyNumber;
@@ -22,16 +24,42 @@ public class GetLuckyNumberService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Log.d(LOG_TAG, getString(R.string.on_intent_log_tag));
+        Log.d("onIntentReceived", isConnectedOrConnecting(getApplicationContext()) + " " + isOnline() + " ");
+        if (isOnline() && isConnectedOrConnecting(getApplicationContext())) {
+            Log.d(LOG_TAG, getString(R.string.on_intent_log_tag));
+            try {
+                receivedNumber = LuckyNumber.getLucky();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                Log.d(LOG_TAG, receivedNumber + "");
+            }
+        }
+    }
+
+    private boolean isOnline() {
+
+        Runtime runtime = Runtime.getRuntime();
         try {
-            receivedNumber = LuckyNumber.getLucky();
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        finally {
-            Log.d(LOG_TAG, receivedNumber +"");
-        }
+            Process ipProcess = runtime.exec("/system/bin/ping -c 1 8.8.8.8");
+            int     exitValue = ipProcess.waitFor();
+            return (exitValue == 0);
 
+        } catch (IOException e)          { e.printStackTrace(); }
+        catch (InterruptedException e) { e.printStackTrace(); }
+
+        return false;
+    }
+
+    private boolean isConnectedOrConnecting(Context context) {
+        try {
+            ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            return cm.getActiveNetworkInfo().isConnectedOrConnecting();
+        }
+        catch (Exception e) {
+            return false;
+        }
     }
 }
