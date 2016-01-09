@@ -13,7 +13,7 @@ public class NetworkStateChangeReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-            Intent checkForLuckyNumberIntent = new Intent(context, GetLuckyNumberService.class);
-            context.startService(checkForLuckyNumberIntent);
+//            Intent checkForLuckyNumberIntent = new Intent(context, GetLuckyNumberService.class);
+//            context.startService(checkForLuckyNumberIntent);
         }
 }

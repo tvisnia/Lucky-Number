@@ -33,7 +33,7 @@ import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int DEFAULT_ALARM_HOUR = 15;
+    private static final int DEFAULT_ALARM_HOUR = 13;
     private static final int DEFAULT_ALARM_MINUTE = 5;
     private static final int MAX_CHARACTERS = 2;
     private static final int EDIT_TEXT_VIEW_PADDING = 15;
@@ -55,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         initAlarm();
         luckyText = ((TextView) findViewById(R.id.lucky_text));
         toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -226,9 +227,14 @@ public class MainActivity extends AppCompatActivity {
         calendar.set(Calendar.HOUR_OF_DAY, DEFAULT_ALARM_HOUR);
         calendar.set(Calendar.MINUTE, DEFAULT_ALARM_MINUTE);
         if (currentDate.after(calendar)) {
-            timeInMillis = calendar.getTimeInMillis() + 1000*60*60*24; //adds 24 hrs in millis
+            Log.d("onAlarmSet", "afterCalendar");
+            timeInMillis = calendar.getTimeInMillis() + 1000*60*60*24;
+            //24 h delay if alarm is set after 15:05
         }
-        else timeInMillis = calendar.getTimeInMillis();
+        else {
+            timeInMillis = calendar.getTimeInMillis();
+            Log.d("onAlarmSet", "beforeCalendar");
+        }
         alarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP, timeInMillis,
                 AlarmManager.INTERVAL_DAY, alarmIntent);
     }

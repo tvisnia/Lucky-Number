@@ -7,4 +7,5 @@
     <string name="empty_string" />
     <string name="on_intent_log_tag">onHandleIntent</string>
     <string name="enter_number_title">Wpisz swój numerek</string>
+    <string name="log_network_state_change">network_state_change</string>
 </resources>
