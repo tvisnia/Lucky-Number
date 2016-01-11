@@ -6,17 +6,19 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.util.Log;
-import android.view.View;
 
 import com.tomek.luckynumber.model.LuckyNumber;
 import com.tomek.luckynumber.model.utils.PrefsUtils;
 import com.tomek.luckynumber.receivers.NotificationReceiverActivity;
 
 import java.io.IOException;
+import java.util.Calendar;
 
 /**
  * Created by tomek on 10.12.15.
@@ -24,6 +26,7 @@ import java.io.IOException;
 public class GetLuckyNumberService extends IntentService {
     private static final String LOG_TAG = GetLuckyNumberService.class.getSimpleName();
     private int receivedNumber = 0;
+    private boolean isOnline = false;
 
     public GetLuckyNumberService() {
         super(LOG_TAG);
@@ -33,9 +36,9 @@ public class GetLuckyNumberService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         Log.d("onIntentReceived : isConnected : ", isOnline() + "");
-        createNotification(receivedNumber);
         if (isOnline() && isConnectedOrConnecting(getApplicationContext())) {
             Log.d(LOG_TAG, getString(R.string.on_intent_log_tag));
+            isOnline = true;
             try {
                 receivedNumber = LuckyNumber.getLucky();
             } catch (IOException e) {
@@ -45,21 +48,40 @@ public class GetLuckyNumberService extends IntentService {
                         getString(R.string.log_network_state_change) : (intent.getStringExtra(PrefsUtils.AUTO_UPDATE_INTENT));
                 Log.d(LOG_TAG, intentExtra);
                 Log.d(LOG_TAG, receivedNumber + "");
+                createNotification(receivedNumber, isOnline);
             }
         }
     }
 
-    public void createNotification(int receivedNumber) {
+    public void createNotification(int receivedNumber, boolean isOnline) {
+        String contentTitle = "";
+        String contentText = "";
         Intent intent = new Intent(this, NotificationReceiverActivity.class);
         PendingIntent pIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), intent, 0);
         Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        long[] vibPattern = {0, 200, 0};
+        long[] vibPattern = {0, 500, 0};
         Notification notif = null;
+
+        if (!isOnline) {
+            contentTitle = "Nowy numerek dostępny";
+            contentText = "Włącz sieć aby sprawdzić";
+            //ikonka w ikonkawifi.jpg
+        }
+        else if (receivedNumber == 0) {
+            contentTitle = "Błąd przy pobieraniu numerka !";
+            //ikonka = ikonkablad.jpg
+        }
+        else {
+            contentTitle = "Sukces ! ";
+            contentText = "Numerek jutro : " + receivedNumber;
+        }
+        Resources resources = getResources();
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
             notif = new Notification.Builder(this)
-                    .setContentTitle("New mail from " + "test@gmail.com")
-                    .setContentText("Subject")
-                    .setSmallIcon(R.drawable.bar)
+                    .setContentTitle(contentTitle)
+                    .setContentText(contentText)
+                    .setSmallIcon(R.drawable.appr)
+                    .setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.appr))
                     .setContentIntent(pIntent)
                     .setSound(soundUri)
                     .setVibrate(vibPattern)

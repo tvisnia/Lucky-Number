@@ -27,6 +27,6 @@ public class AutoNumberUpdateReceiver extends BroadcastReceiver {
 
     private boolean isWeekday() {
         int dayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
-        return ((dayOfWeek >= Calendar.MONDAY) && (dayOfWeek <= Calendar.FRIDAY));
+        return ((dayOfWeek >= Calendar.SUNDAY) && (dayOfWeek <= Calendar.THURSDAY));
     }
 }

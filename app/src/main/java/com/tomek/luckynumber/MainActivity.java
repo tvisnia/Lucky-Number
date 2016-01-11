@@ -33,7 +33,7 @@ import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int DEFAULT_ALARM_HOUR = 13;
+    private static final int DEFAULT_ALARM_HOUR = 15;
     private static final int DEFAULT_ALARM_MINUTE = 5;
     private static final int MAX_CHARACTERS = 2;
     private static final int EDIT_TEXT_VIEW_PADDING = 15;
@@ -207,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initAlarm() {
-        if(!isAlarmSet()) {
+        if (!isAlarmSet()) {
             setAlarm();
             Log.d("onAlarmReinited", isAlarmSet() + "");
         }
@@ -216,6 +216,7 @@ public class MainActivity extends AppCompatActivity {
     private void setAlarm() {
         long timeInMillis;
         Calendar currentDate = Calendar.getInstance();
+        currentDate.setTimeInMillis(System.currentTimeMillis());
         alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         notifyAutoUpdateReceiver = new Intent(getApplicationContext(), AutoNumberUpdateReceiver.class);
         notifyAutoUpdateReceiver.setAction(INTENT_ACTION_ID);
@@ -228,10 +229,10 @@ public class MainActivity extends AppCompatActivity {
         calendar.set(Calendar.MINUTE, DEFAULT_ALARM_MINUTE);
         if (currentDate.after(calendar)) {
             Log.d("onAlarmSet", "afterCalendar");
-            timeInMillis = calendar.getTimeInMillis() + 1000*60*60*24;
+            timeInMillis = calendar.getTimeInMillis() + 1000 * 60 * 60 * 24;
+
             //24 h delay if alarm is set after 15:05
-        }
-        else {
+        } else {
             timeInMillis = calendar.getTimeInMillis();
             Log.d("onAlarmSet", "beforeCalendar");
         }
