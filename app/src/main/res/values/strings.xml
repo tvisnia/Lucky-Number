@@ -8,4 +8,13 @@
     <string name="on_intent_log_tag">onHandleIntent</string>
     <string name="enter_number_title">Wpisz swój numerek</string>
     <string name="log_network_state_change">network_state_change</string>
+    <string name="alarm_set_log">onAlarmSet</string>
+    <string name="set_after_current">afterCalendar</string>
+    <string name="set_before_current">beforeCalendar</string>
+    <string name="new_number_av">Nowy numerek dostępny</string>
+    <string name="turn_on_to_check">Włącz sieć aby sprawdzić</string>
+    <string name="error">Błąd przy pobieraniu numerka !</string>
+    <string name="success">"Sukces ! "</string>
+    <string name="tommorow_number">"Numerek jutro : "</string>
+    <string name="intent_received_log">"onIntentReceived : isConnected : "</string>
 </resources>

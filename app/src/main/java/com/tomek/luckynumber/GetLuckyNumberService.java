@@ -18,7 +18,6 @@ import com.tomek.luckynumber.model.utils.PrefsUtils;
 import com.tomek.luckynumber.receivers.NotificationReceiverActivity;
 
 import java.io.IOException;
-import java.util.Calendar;
 
 /**
  * Created by tomek on 10.12.15.
@@ -35,7 +34,7 @@ public class GetLuckyNumberService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Log.d("onIntentReceived : isConnected : ", isOnline() + "");
+        Log.d(getString(R.string.intent_received_log), isOnline() + "");
         if (isOnline() && isConnectedOrConnecting(getApplicationContext())) {
             Log.d(LOG_TAG, getString(R.string.on_intent_log_tag));
             isOnline = true;
@@ -48,9 +47,9 @@ public class GetLuckyNumberService extends IntentService {
                         getString(R.string.log_network_state_change) : (intent.getStringExtra(PrefsUtils.AUTO_UPDATE_INTENT));
                 Log.d(LOG_TAG, intentExtra);
                 Log.d(LOG_TAG, receivedNumber + "");
-                createNotification(receivedNumber, isOnline);
             }
         }
+        createNotification(receivedNumber, isOnline);
     }
 
     public void createNotification(int receivedNumber, boolean isOnline) {
@@ -63,17 +62,17 @@ public class GetLuckyNumberService extends IntentService {
         Notification notif = null;
 
         if (!isOnline) {
-            contentTitle = "Nowy numerek dostępny";
-            contentText = "Włącz sieć aby sprawdzić";
+            contentTitle = getString(R.string.new_number_av);
+            contentText = getString(R.string.turn_on_to_check);
             //ikonka w ikonkawifi.jpg
         }
         else if (receivedNumber == 0) {
-            contentTitle = "Błąd przy pobieraniu numerka !";
+            contentTitle = getString(R.string.error);
             //ikonka = ikonkablad.jpg
         }
         else {
-            contentTitle = "Sukces ! ";
-            contentText = "Numerek jutro : " + receivedNumber;
+            contentTitle = getString(R.string.success);
+            contentText = getString(R.string.tommorow_number) + receivedNumber;
         }
         Resources resources = getResources();
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
