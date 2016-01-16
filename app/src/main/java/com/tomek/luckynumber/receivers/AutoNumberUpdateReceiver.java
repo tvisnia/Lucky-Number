@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import com.tomek.luckynumber.GetLuckyNumberService;
+import com.tomek.luckynumber.services.GetLuckyNumberService;
 import com.tomek.luckynumber.model.utils.PrefsUtils;
 
 import java.util.Calendar;
@@ -22,7 +22,10 @@ public class AutoNumberUpdateReceiver extends BroadcastReceiver {
             Intent checkForLuckyNumberIntent = new Intent(context, GetLuckyNumberService.class);
             checkForLuckyNumberIntent.putExtra(PrefsUtils.AUTO_UPDATE_INTENT, PrefsUtils.AUTO_UPDATE_INTENT);
             context.startService(checkForLuckyNumberIntent);
+            PrefsUtils.putBoolInSharedPreferences(context, PrefsUtils.IS_NUMBER_UP_TO_DATE, false);
         }
+        PrefsUtils.putBoolInSharedPreferences(context, PrefsUtils.IS_WEEKDAY, isWeekday());
+        PrefsUtils.putBoolInSharedPreferences(context, PrefsUtils.ARE_YOU_LUCKY, false);
     }
 
     private boolean isWeekday() {

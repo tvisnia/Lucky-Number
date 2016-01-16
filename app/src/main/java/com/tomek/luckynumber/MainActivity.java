@@ -1,15 +1,10 @@
 package com.tomek.luckynumber;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -22,77 +17,73 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.dd.morphingbutton.MorphingButton;
 import com.rengwuxian.materialedittext.MaterialEditText;
-import com.tomek.luckynumber.model.LuckyNumber;
 import com.tomek.luckynumber.model.utils.PrefsUtils;
 import com.tomek.luckynumber.model.utils.Utils;
-import com.tomek.luckynumber.receivers.AutoNumberUpdateReceiver;
-
-import java.io.IOException;
-import java.util.Calendar;
+import com.tomek.luckynumber.services.GetLuckyNumberService;
+import com.tomek.luckynumber.services.InitAlarmService;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int DEFAULT_ALARM_HOUR = 6;
-    private static final int DEFAULT_ALARM_MINUTE = 5;
+
     private static final int MAX_CHARACTERS = 2;
     private static final int EDIT_TEXT_VIEW_PADDING = 15;
-    private static final int DEFAULT_FLAG = 0;
-    private static final int INTENT_ID = 15;
-    private static final String INTENT_ACTION_ID = "com.tomek.luckynumber.action.alarm";
+
     private int myNumber;
     private int luckyNumber;
     private MaterialDialog mDialog;
     private TextView luckyText;
-    private FloatingActionButton fab;
+    private MorphingButton fab;
     private Toolbar toolbar;
     private MaterialEditText mInputText;
-    private AlarmManager alarmMgr;
-    private Intent notifyAutoUpdateReceiver;
-    private PendingIntent alarmIntent;
+    private TextView luckyNumberText;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        startService(new Intent(MainActivity.this, InitAlarmService.class));
 
-        initAlarm();
-        luckyText = ((TextView) findViewById(R.id.lucky_text));
+        luckyNumberText = (TextView) findViewById(R.id.lucky_number_text);
+
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab = (MorphingButton) findViewById(R.id.button);
+        fab.setText("Pobierz numerek");
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 new CheckNumber().execute();
-                Log.d("onClickpoExeceute", "number : " + luckyNumber + " text : " + luckyText);
-
             }
         });
         checkFirstRun();
+    }
+
+    @Override
+    protected void onResume() {
+        if (PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.CURRENT_NUMBER) != 0 && PrefsUtils.getBoolFromSharedPreference(getApplicationContext(), PrefsUtils.IS_NUMBER_UP_TO_DATE)) {
+            luckyNumberText.setText(PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.CURRENT_NUMBER));
+        }
+        super.onResume();
     }
 
     class CheckNumber extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected Void doInBackground(Void... params) {
-            try {
-                luckyNumber = LuckyNumber.getLucky();
-                Log.d("doInBackground", "number : " + luckyNumber + " text : " + luckyText);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                startService(new Intent(MainActivity.this, GetLuckyNumberService.class));
             return null;
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            luckyText.setText(String.valueOf(luckyNumber));
             Log.d("onPostExecute", "number : " + luckyNumber + " text : " + luckyText);
             String message = "";
+            luckyNumber = + PrefsUtils.getIntFromSharedPreference(MainActivity.this, PrefsUtils.CURRENT_NUMBER);
             if (luckyNumber == 0) {
-                message = "Błąd !";
-            } else message = "Pomyslnie pobrano numerek !";
+                message = "Nie udało się pobrać numerka";
+            } else message = "Pomyslnie pobrano numerek : " + luckyNumber;
             Snackbar.make(fab, message, Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
         }
@@ -206,54 +197,5 @@ public class MainActivity extends AppCompatActivity {
         mInputText.setHint(R.string.input_your_number_hint);
     }
 
-    private void initAlarm() {
-        if (!isAlarmSet()) {
-            setAlarm();
-            Log.d("onAlarmReinited", isAlarmSet() + "");
-        }
-    }
 
-    private void setAlarm() {
-        long timeInMillis;
-        Calendar currentDate = Calendar.getInstance();
-        currentDate.setTimeInMillis(System.currentTimeMillis());
-        alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        notifyAutoUpdateReceiver = new Intent(getApplicationContext(), AutoNumberUpdateReceiver.class);
-        notifyAutoUpdateReceiver.setAction(INTENT_ACTION_ID);
-        notifyAutoUpdateReceiver.setData(Uri.parse("custom://" + INTENT_ACTION_ID));
-        alarmIntent = PendingIntent
-                .getBroadcast(MainActivity.this, INTENT_ID, notifyAutoUpdateReceiver, PendingIntent.FLAG_UPDATE_CURRENT);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY, DEFAULT_ALARM_HOUR);
-        calendar.set(Calendar.MINUTE, DEFAULT_ALARM_MINUTE);
-        if (currentDate.after(calendar)) {
-            Log.d(getString(R.string.alarm_set_log), getString(R.string.set_after_current));
-            calendar.set(Calendar.DATE, calendar.get(Calendar.DATE) + 1);
-            //timeInMillis = calendar.getTimeInMillis() + 1000 * 60 * 60 * 24;
-            //24 h delay if alarm is set after 15:05
-        } else {
-            Log.d(getString(R.string.alarm_set_log), getString(R.string.set_before_current));
-        }
-        timeInMillis = calendar.getTimeInMillis();
-        alarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP, timeInMillis,
-                AlarmManager.INTERVAL_DAY, alarmIntent);
-    }
-
-    private void cancelAlarm() {
-        Intent notifyAutoUpdateReceiver = new Intent(getApplicationContext(), AutoNumberUpdateReceiver.class);
-        notifyAutoUpdateReceiver.setAction(INTENT_ACTION_ID);
-        notifyAutoUpdateReceiver.setData(Uri.parse("custom://" + INTENT_ACTION_ID));
-        PendingIntent alarmIntent = PendingIntent
-                .getBroadcast(MainActivity.this, INTENT_ID, notifyAutoUpdateReceiver, PendingIntent.FLAG_UPDATE_CURRENT);
-        alarmMgr.cancel(alarmIntent);
-        this.alarmIntent.cancel();
-    }
-
-    private boolean isAlarmSet() {
-        Intent intent = new Intent(getApplicationContext(), AutoNumberUpdateReceiver.class);
-        intent.setAction(INTENT_ACTION_ID);
-        intent.setData(Uri.parse("custom://" + INTENT_ACTION_ID));
-        return (PendingIntent.getBroadcast(getApplicationContext(), INTENT_ID, intent, PendingIntent.FLAG_NO_CREATE) != null);
-    }
 }

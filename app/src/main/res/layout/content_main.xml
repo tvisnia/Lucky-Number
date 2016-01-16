@@ -12,10 +12,4 @@
     tools:context=".MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <TextView
-        android:id="@+id/lucky_text"
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-        />
-
 </RelativeLayout>

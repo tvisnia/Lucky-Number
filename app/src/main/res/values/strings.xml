@@ -17,4 +17,5 @@
     <string name="success">"Sukces ! "</string>
     <string name="tommorow_number">"Numerek jutro : "</string>
     <string name="intent_received_log">"onIntentReceived : isConnected : "</string>
+    <string name="log_on_boot">onBootReceiver</string>
 </resources>
