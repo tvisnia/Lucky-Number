@@ -20,7 +20,7 @@ public class InitAlarmService extends IntentService {
 
     private static final String CONSTRUCTOR_TAG = InitAlarmService.class.getSimpleName();
     private static final int DEFAULT_ALARM_HOUR = 15;
-    private static final int DEFAULT_ALARM_MINUTE = 10;
+    private static final int DEFAULT_ALARM_MINUTE = 5;
     private static final int DEFAULT_FLAG = 0;
     private static final int INTENT_ID = 15;
     private static final String INTENT_ACTION_ID = "com.tomek.luckynumber.action.alarm";

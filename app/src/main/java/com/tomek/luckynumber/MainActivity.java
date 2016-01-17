@@ -31,24 +31,25 @@ public class MainActivity extends AppCompatActivity {
     private static final int EDIT_TEXT_VIEW_PADDING = 15;
 
     private int myNumber;
-    private int luckyNumber;
+    private int lucky_text;
     private MaterialDialog mDialog;
-    private TextView luckyText;
     private MorphingButton fab;
     private Toolbar toolbar;
     private MaterialEditText mInputText;
-    private TextView luckyNumberText;
+    private TextView title;
+    private TextView luckyText;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        startService(new Intent(MainActivity.this, InitAlarmService.class));
-
-        luckyNumberText = (TextView) findViewById(R.id.lucky_number_text);
-
+        setContentView(R.layout.activity_main);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        startService(new Intent(MainActivity.this, InitAlarmService.class));
+
+        title = (TextView) findViewById(R.id.lucky_number_title);
+        luckyText = (TextView) findViewById(R.id.lucky_number_text);
         fab = (MorphingButton) findViewById(R.id.button);
         fab.setText("Pobierz numerek");
         fab.setOnClickListener(new View.OnClickListener() {
@@ -62,10 +63,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        if (PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.CURRENT_NUMBER) != 0 && PrefsUtils.getBoolFromSharedPreference(getApplicationContext(), PrefsUtils.IS_NUMBER_UP_TO_DATE)) {
-            luckyNumberText.setText(PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.CURRENT_NUMBER));
-        }
         super.onResume();
+        if (PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.CURRENT_NUMBER) != 0 && PrefsUtils.getBoolFromSharedPreference(getApplicationContext(), PrefsUtils.IS_NUMBER_UP_TO_DATE)) {
+            luckyText.setText(String.valueOf(PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.CURRENT_NUMBER)));
+        }
     }
 
     class CheckNumber extends AsyncTask<Void, Void, Void> {
@@ -78,14 +79,18 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            Log.d("onPostExecute", "number : " + luckyNumber + " text : " + luckyText);
+            Log.d("onPostExecute", "number : " + lucky_text + " text : " + luckyText);
             String message = "";
-            luckyNumber = + PrefsUtils.getIntFromSharedPreference(MainActivity.this, PrefsUtils.CURRENT_NUMBER);
-            if (luckyNumber == 0) {
+            lucky_text = PrefsUtils.getIntFromSharedPreference(MainActivity.this, PrefsUtils.CURRENT_NUMBER);
+            if (lucky_text == 0 || lucky_text == -1) {
                 message = "Nie udało się pobrać numerka";
-            } else message = "Pomyslnie pobrano numerek : " + luckyNumber;
+            } else {
+                message = "Pomyslnie pobrano numerek : " + lucky_text;
+                luckyText.setText(String.valueOf(lucky_text));
+            }
             Snackbar.make(fab, message, Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
+
         }
     }
 

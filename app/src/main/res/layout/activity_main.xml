@@ -42,6 +42,7 @@
     android:layout_height="75dp"/>
 
 <TextView
+    android:id="@+id/lucky_number_text"
     android:layout_width="100dp"
     android:layout_height="100dp"
     android:gravity="center"
@@ -50,7 +51,7 @@
     android:layout_gravity="bottom"/>
 
     <TextView
-        android:id="@+id/lucky_number_text"
+        android:id="@+id/lucky_number_title"
         android:layout_width="250dp"
         android:layout_height="50dp"
         android:textSize="25dp"
