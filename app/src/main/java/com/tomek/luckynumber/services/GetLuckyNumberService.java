@@ -15,8 +15,9 @@ import android.util.Log;
 
 import com.tomek.luckynumber.R;
 import com.tomek.luckynumber.model.LuckyNumber;
+import com.tomek.luckynumber.model.utils.ConnectivityHelper;
 import com.tomek.luckynumber.model.utils.PrefsUtils;
-import com.tomek.luckynumber.receivers.NotificationReceiverActivity;
+import com.tomek.luckynumber.NotificationReceiverActivity;
 
 import java.io.IOException;
 
@@ -35,8 +36,8 @@ public class GetLuckyNumberService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Log.d(getString(R.string.intent_received_log), isOnline() + "");
-        if (isOnline() && isConnectedOrConnecting(getApplicationContext())) {
+        Log.d(getString(R.string.intent_received_log), ConnectivityHelper.isOnline() + "");
+        if (ConnectivityHelper.isOnline() && ConnectivityHelper.isConnectedOrConnecting(getApplicationContext())) {
             Log.d(TAG, getString(R.string.on_intent_log_tag));
             isOnline = true;
             try {
@@ -48,7 +49,7 @@ public class GetLuckyNumberService extends IntentService {
                         getString(R.string.log_network_state_change) : (intent.getStringExtra(PrefsUtils.AUTO_UPDATE_INTENT));
                 Log.d(TAG, intentExtra);
                 Log.d(TAG, receivedNumber + "");
-                if (receivedNumber != 0 ) {
+                if (receivedNumber > 0 ) {
                     PrefsUtils.putIntInSharedPreferences(getApplicationContext(), PrefsUtils.CURRENT_NUMBER, receivedNumber);
                     if (receivedNumber == PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.MY_NUMBER_KEY)) {
                         PrefsUtils.putBoolInSharedPreferences(getApplicationContext(), PrefsUtils.ARE_YOU_LUCKY, true);
@@ -56,73 +57,6 @@ public class GetLuckyNumberService extends IntentService {
                     PrefsUtils.putBoolInSharedPreferences(getApplicationContext(), PrefsUtils.IS_NUMBER_UP_TO_DATE, true);
                 }
             }
-        }
-        createNotification(receivedNumber, isOnline);
-    }
-
-    public void createNotification(int receivedNumber, boolean isOnline) {
-        String contentTitle = "";
-        String contentText = "";
-        Intent intent = new Intent(this, NotificationReceiverActivity.class);
-        PendingIntent pIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), intent, 0);
-        Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        long[] vibPattern = {0, 500, 0};
-        Notification notif = null;
-
-        if (!isOnline) {
-            contentTitle = getString(R.string.new_number_av);
-            contentText = getString(R.string.turn_on_to_check);
-            //ikonka w ikonkawifi.jpg
-        }
-        else if (receivedNumber == 0) {
-            contentTitle = getString(R.string.error);
-            //ikonka = ikonkablad.jpg
-        }
-        else {
-            contentTitle = getString(R.string.success);
-            contentText = getString(R.string.tommorow_number) + receivedNumber;
-        }
-        Resources resources = getResources();
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
-            notif = new Notification.Builder(this)
-                    .setContentTitle(contentTitle)
-                    .setContentText(contentText)
-                    .setSmallIcon(R.drawable.appr)
-                    .setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.appr))
-                    .setContentIntent(pIntent)
-                    .setSound(soundUri)
-                    .setVibrate(vibPattern)
-                    .build();
-        }
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        // hide the notification after its selected
-        notif.flags |= Notification.FLAG_AUTO_CANCEL;
-
-        notificationManager.notify(0, notif);
-    }
-
-    private boolean isOnline() {
-
-        Runtime runtime = Runtime.getRuntime();
-        try {
-
-            Process ipProcess = runtime.exec("/system/bin/ping -c 1 8.8.8.8");
-            int exitValue = ipProcess.waitFor();
-            return (exitValue == 0);
-
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return false;
-    }
-
-    private boolean isConnectedOrConnecting(Context context) {
-        try {
-            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            return cm.getActiveNetworkInfo().isConnectedOrConnecting();
-        } catch (Exception e) {
-            return false;
         }
     }
 }

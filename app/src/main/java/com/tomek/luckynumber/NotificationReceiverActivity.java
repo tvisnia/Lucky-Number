@@ -1,4 +1,4 @@
-package com.tomek.luckynumber.receivers;
+package com.tomek.luckynumber;
 
 /**
  * Created by tomek on 08.01.16.
