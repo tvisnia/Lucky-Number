@@ -1,9 +1,11 @@
 package com.tomek.luckynumber;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -31,13 +33,15 @@ public class MainActivity extends AppCompatActivity {
     private static final int EDIT_TEXT_VIEW_PADDING = 15;
 
     private int myNumber;
-    private int lucky_text;
     private MaterialDialog mDialog;
     private MorphingButton fab;
     private Toolbar toolbar;
     private MaterialEditText mInputText;
     private TextView title;
     private TextView luckyText;
+
+    private BroadcastReceiver numberReceiver;
+    private int receivedNumber;
 
 
     @Override
@@ -55,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new CheckNumber().execute();
+                startService(new Intent(MainActivity.this, GetLuckyNumberService.class));
             }
         });
         checkFirstRun();
@@ -64,34 +68,37 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.CURRENT_NUMBER) != 0 && PrefsUtils.getBoolFromSharedPreference(getApplicationContext(), PrefsUtils.IS_NUMBER_UP_TO_DATE)) {
+        if (PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.CURRENT_NUMBER) > 0 && PrefsUtils.getBoolFromSharedPreference(getApplicationContext(), PrefsUtils.IS_NUMBER_UP_TO_DATE)) {
             luckyText.setText(String.valueOf(PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.CURRENT_NUMBER)));
         }
+        else luckyText.setText("-");
+        IntentFilter ifilter = new IntentFilter("android.intent.action.MAIN");
+        numberReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                receivedNumber = intent.getIntExtra(GetLuckyNumberService.class.getSimpleName(), 0);
+                updateLuckyText(receivedNumber);
+            }
+        };
     }
 
-    class CheckNumber extends AsyncTask<Void, Void, Void> {
+    @Override
+    protected void onPause() {
+        super.onPause();
+        this.unregisterReceiver(this.numberReceiver);
+    }
 
-        @Override
-        protected Void doInBackground(Void... params) {
-                startService(new Intent(MainActivity.this, GetLuckyNumberService.class));
-            return null;
+    private void updateLuckyText(int lucky_text) {
+        String message  = "";
+        if (lucky_text < 1) {
+            message = "Nie udało się pobrać numerka";
+        } else {
+            message = "Numerek : " + lucky_text;
+            luckyText.setText(String.valueOf(lucky_text));
         }
+        Snackbar.make(fab, message, Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show();
 
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            Log.d("onPostExecute", "number : " + lucky_text + " text : " + luckyText);
-            String message = "";
-            lucky_text = PrefsUtils.getIntFromSharedPreference(MainActivity.this, PrefsUtils.CURRENT_NUMBER);
-            if (lucky_text == 0 || lucky_text == -1) {
-                message = "Nie udało się pobrać numerka";
-            } else {
-                message = "Pomyslnie pobrano numerek : " + lucky_text;
-                luckyText.setText(String.valueOf(lucky_text));
-            }
-            Snackbar.make(fab, message, Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show();
-
-        }
     }
 
     @Override

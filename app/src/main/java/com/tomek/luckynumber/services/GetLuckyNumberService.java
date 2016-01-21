@@ -58,5 +58,6 @@ public class GetLuckyNumberService extends IntentService {
                 }
             }
         }
+        this.sendBroadcast(new Intent("android.intent.action.MAIN").putExtra(TAG, receivedNumber));
     }
 }

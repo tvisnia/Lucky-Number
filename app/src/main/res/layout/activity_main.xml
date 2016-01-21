@@ -55,7 +55,6 @@
         android:layout_width="250dp"
         android:layout_height="50dp"
         android:textSize="25dp"
-        android:text="Numerek na jutro :"
         android:gravity="center"
         android:layout_marginBottom="190dp"
         android:layout_gravity="bottom"/>

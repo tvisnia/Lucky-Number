@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 
+import com.tomek.luckynumber.MainActivity;
 import com.tomek.luckynumber.NotificationReceiverActivity;
 import com.tomek.luckynumber.R;
 import com.tomek.luckynumber.model.LuckyNumber;
@@ -47,7 +48,7 @@ public class GetNumberOnUpdateService extends IntentService {
                         getString(R.string.log_network_state_change) : (intent.getStringExtra(PrefsUtils.AUTO_UPDATE_INTENT));
                 Log.d(TAG, intentExtra);
                 Log.d(TAG, receivedNumber + "");
-                if (receivedNumber != 0 ) {
+                if (receivedNumber > 0 ) {
                     PrefsUtils.putIntInSharedPreferences(getApplicationContext(), PrefsUtils.CURRENT_NUMBER, receivedNumber);
                     if (receivedNumber == PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.MY_NUMBER_KEY)) {
                         PrefsUtils.putBoolInSharedPreferences(getApplicationContext(), PrefsUtils.ARE_YOU_LUCKY, true);
@@ -69,6 +70,12 @@ public class GetNumberOnUpdateService extends IntentService {
         long[] vibPattern = {0, 500, 0};
         Notification notif = null;
 
+        Intent activityIntent = new Intent(getApplicationContext(), MainActivity.class);
+        activityIntent.setAction(Long.toString(System.currentTimeMillis()));
+        activityIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0,
+                activityIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
         if (!isOnline && !PrefsUtils.getBoolFromSharedPreference(getApplicationContext(), PrefsUtils.IS_NUMBER_UP_TO_DATE)) {
             contentTitle = getString(R.string.new_number_av);
             contentText = getString(R.string.turn_on_to_check);
@@ -87,6 +94,7 @@ public class GetNumberOnUpdateService extends IntentService {
             notif = new Notification.Builder(this)
                     .setContentTitle(contentTitle)
                     .setContentText(contentText)
+                    .setContentIntent(pendingIntent)
                     .setSmallIcon(R.drawable.appr)
                     .setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.appr))
                     .setContentIntent(pIntent)
