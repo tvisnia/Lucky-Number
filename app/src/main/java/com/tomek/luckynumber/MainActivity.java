@@ -19,12 +19,15 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.dd.morphingbutton.MorphingButton;
+import com.dd.processbutton.iml.ActionProcessButton;
 import com.rengwuxian.materialedittext.MaterialEditText;
 import com.tomek.luckynumber.model.utils.PrefsUtils;
 import com.tomek.luckynumber.model.utils.Utils;
 import com.tomek.luckynumber.services.GetLuckyNumberService;
 import com.tomek.luckynumber.services.InitAlarmService;
+import com.victor.loading.rotate.RotateLoading;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,12 +37,12 @@ public class MainActivity extends AppCompatActivity {
 
     private int myNumber;
     private MaterialDialog mDialog;
-    private MorphingButton fab;
     private Toolbar toolbar;
     private MaterialEditText mInputText;
-    private TextView title;
+    private TextView dialogTitle;
     private TextView luckyText;
-
+    private RotateLoading progressView;
+    private CircleImageView arrow;
     private BroadcastReceiver numberReceiver;
     private int receivedNumber;
 
@@ -48,55 +51,65 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        final ActionProcessButton button = (ActionProcessButton) findViewById(R.id.ok);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        startService(new Intent(MainActivity.this, InitAlarmService.class));
+        initProgressView();
 
-        title = (TextView) findViewById(R.id.lucky_number_title);
+        startService(new Intent(MainActivity.this, InitAlarmService.class));
+        dialogTitle = (TextView) findViewById(R.id.lucky_number_title);
         luckyText = (TextView) findViewById(R.id.lucky_number_text);
-        fab = (MorphingButton) findViewById(R.id.button);
-        fab.setText("Pobierz numerek");
-        fab.setOnClickListener(new View.OnClickListener() {
+        arrow = (CircleImageView) findViewById(R.id.down_arrow);
+
+        button.setMode(ActionProcessButton.Mode.ENDLESS);
+        button.setColorScheme(android.R.color.holo_blue_bright, android.R.color.holo_green_dark, android.R.color.holo_red_dark, android.R.color.holo_orange_light);
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
+            public void onClick(View v) {
+                progressView.start();
                 startService(new Intent(MainActivity.this, GetLuckyNumberService.class));
+                button.setMode(ActionProcessButton.Mode.PROGRESS);
+                button.setText("Pobieranie numerka...");
+
             }
         });
         checkFirstRun();
+        initNumberUpdateReceiver(button);
+    }
+
+    private void initProgressView() {
+        progressView = (RotateLoading) findViewById(R.id.rotateloading);
+        progressView.stop();
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (numberReceiver != null) {
+            this.unregisterReceiver(this.numberReceiver);
+            numberReceiver = null;
+        }
+        super.onDestroy();
     }
 
     @Override
     protected void onResume() {
-        super.onResume();
         if (PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.CURRENT_NUMBER) > 0 && PrefsUtils.getBoolFromSharedPreference(getApplicationContext(), PrefsUtils.IS_NUMBER_UP_TO_DATE)) {
             luckyText.setText(String.valueOf(PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.CURRENT_NUMBER)));
-        }
-        else luckyText.setText("-");
-        IntentFilter ifilter = new IntentFilter("android.intent.action.MAIN");
-        numberReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                receivedNumber = intent.getIntExtra(GetLuckyNumberService.class.getSimpleName(), 0);
-                updateLuckyText(receivedNumber);
-            }
-        };
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        this.unregisterReceiver(this.numberReceiver);
+        } else luckyText.setText("-");
+        progressView.stop();
+        super.onResume();
     }
 
     private void updateLuckyText(int lucky_text) {
-        String message  = "";
+        String message = "";
         if (lucky_text < 1) {
             message = "Nie udało się pobrać numerka";
         } else {
             message = "Numerek : " + lucky_text;
             luckyText.setText(String.valueOf(lucky_text));
         }
-        Snackbar.make(fab, message, Snackbar.LENGTH_LONG)
+        Snackbar.make(luckyText, message, Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show();
 
     }
@@ -209,5 +222,22 @@ public class MainActivity extends AppCompatActivity {
         mInputText.setHint(R.string.input_your_number_hint);
     }
 
+    private void initNumberUpdateReceiver(final ActionProcessButton button) {
+        if (numberReceiver == null) {
+            IntentFilter ifilter = new IntentFilter("android.intent.action.MAIN");
+            numberReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    Log.d("MainActivity", "onReceived");
+                    button.setMode(ActionProcessButton.Mode.ENDLESS);
+                    button.setText("Pobierz numerek");
+                    receivedNumber = intent.getIntExtra(GetLuckyNumberService.class.getSimpleName(), 0);
+                    updateLuckyText(receivedNumber);
+                    progressView.stop();
+                }
+            };
+            this.registerReceiver(numberReceiver, ifilter);
+        }
+    }
 
 }

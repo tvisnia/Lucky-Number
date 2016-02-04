@@ -18,6 +18,7 @@ import com.tomek.luckynumber.model.LuckyNumber;
 import com.tomek.luckynumber.model.utils.ConnectivityHelper;
 import com.tomek.luckynumber.model.utils.PrefsUtils;
 import com.tomek.luckynumber.NotificationReceiverActivity;
+import com.tomek.luckynumber.model.utils.SoundHelper;
 
 import java.io.IOException;
 
@@ -49,10 +50,11 @@ public class GetLuckyNumberService extends IntentService {
                         getString(R.string.log_network_state_change) : (intent.getStringExtra(PrefsUtils.AUTO_UPDATE_INTENT));
                 Log.d(TAG, intentExtra);
                 Log.d(TAG, receivedNumber + "");
-                if (receivedNumber > 0 ) {
+                if (receivedNumber > 0) {
                     PrefsUtils.putIntInSharedPreferences(getApplicationContext(), PrefsUtils.CURRENT_NUMBER, receivedNumber);
-                    if (receivedNumber == PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.MY_NUMBER_KEY)) {
-                        PrefsUtils.putBoolInSharedPreferences(getApplicationContext(), PrefsUtils.ARE_YOU_LUCKY, true);
+                    if (receivedNumber == PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.MY_NUMBER_KEY) && !PrefsUtils.getBoolFromSharedPreference(getApplicationContext(), PrefsUtils.IS_NUMBER_UP_TO_DATE)) {
+//                        PrefsUtils.putBoolInSharedPreferences(getApplicationContext(), PrefsUtils.ARE_YOU_LUCKY, true);
+                        SoundHelper.play(getApplicationContext(), R.raw.tada);
                     }
                     PrefsUtils.putBoolInSharedPreferences(getApplicationContext(), PrefsUtils.IS_NUMBER_UP_TO_DATE, true);
                 }
@@ -61,3 +63,4 @@ public class GetLuckyNumberService extends IntentService {
         this.sendBroadcast(new Intent("android.intent.action.MAIN").putExtra(TAG, receivedNumber));
     }
 }
+

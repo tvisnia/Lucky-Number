@@ -12,6 +12,7 @@ import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Build;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
 import com.tomek.luckynumber.MainActivity;
@@ -20,6 +21,7 @@ import com.tomek.luckynumber.R;
 import com.tomek.luckynumber.model.LuckyNumber;
 import com.tomek.luckynumber.model.utils.ConnectivityHelper;
 import com.tomek.luckynumber.model.utils.PrefsUtils;
+import com.tomek.luckynumber.model.utils.SoundHelper;
 
 import java.io.IOException;
 
@@ -48,7 +50,7 @@ public class GetNumberOnUpdateService extends IntentService {
                         getString(R.string.log_network_state_change) : (intent.getStringExtra(PrefsUtils.AUTO_UPDATE_INTENT));
                 Log.d(TAG, intentExtra);
                 Log.d(TAG, receivedNumber + "");
-                if (receivedNumber > 0 ) {
+                if (receivedNumber > 0) {
                     PrefsUtils.putIntInSharedPreferences(getApplicationContext(), PrefsUtils.CURRENT_NUMBER, receivedNumber);
                     if (receivedNumber == PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.MY_NUMBER_KEY)) {
                         PrefsUtils.putBoolInSharedPreferences(getApplicationContext(), PrefsUtils.ARE_YOU_LUCKY, true);
@@ -80,19 +82,28 @@ public class GetNumberOnUpdateService extends IntentService {
             contentTitle = getString(R.string.new_number_av);
             contentText = getString(R.string.turn_on_to_check);
             //ikonka w ikonkawifi.jpg
-        }
-        else if (receivedNumber < 1) {
+        } else if (receivedNumber < 1) {
             contentTitle = getString(R.string.error);
             //ikonka = ikonkablad.jpg
-        }
-        else {
-            contentTitle = getString(R.string.success);
-            contentText = getString(R.string.tommorow_number) + receivedNumber;
+        } else {
+
+            if (receivedNumber == PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.MY_NUMBER_KEY)) {
+                SoundHelper.play(getApplicationContext(), R.raw.tada);
+                contentTitle = getString(R.string.number_notif) + receivedNumber;
+                contentText = getString(R.string.my_number_notif);
+            }
+            else {
+                contentTitle = getString(R.string.success);
+                contentText = getString(R.string.tommorow_number) + receivedNumber;
+            }
         }
         Resources resources = getResources();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            notif = new Notification.Builder(this)
+            android.support.v4.app.NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.drawable.ic_sync_black_24dp, "Sprawdź", pendingIntent).build();
+
+            notif = new NotificationCompat.Builder(this)
                     .setContentTitle(contentTitle)
+                    .addAction(action)
                     .setContentText(contentText)
                     .setContentIntent(pendingIntent)
                     .setSmallIcon(R.drawable.appr)
@@ -101,15 +112,14 @@ public class GetNumberOnUpdateService extends IntentService {
                     .setSound(soundUri)
                     .setVibrate(vibPattern)
                     .build();
+
+            NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            // hide the notification after its selected
+            notif.flags |= Notification.FLAG_AUTO_CANCEL;
+
+            notificationManager.notify(0, notif);
         }
 
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        // hide the notification after its selected
-        notif.flags |= Notification.FLAG_AUTO_CANCEL;
 
-        notificationManager.notify(0, notif);
     }
-
-
-
 }
