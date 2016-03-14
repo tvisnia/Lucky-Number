@@ -29,7 +29,7 @@ import com.victor.loading.rotate.RotateLoading;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
 
     private static final int MAX_CHARACTERS = 2;
@@ -45,13 +45,13 @@ public class MainActivity extends AppCompatActivity {
     private CircleImageView arrow;
     private BroadcastReceiver numberReceiver;
     private int receivedNumber;
-
+    private ActionProcessButton button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        final ActionProcessButton button = (ActionProcessButton) findViewById(R.id.ok);
+        button = (ActionProcessButton) findViewById(R.id.ok);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         initProgressView();
@@ -63,18 +63,12 @@ public class MainActivity extends AppCompatActivity {
 
         button.setMode(ActionProcessButton.Mode.ENDLESS);
         button.setColorScheme(android.R.color.holo_blue_bright, android.R.color.holo_green_dark, android.R.color.holo_red_dark, android.R.color.holo_orange_light);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                progressView.start();
-                startService(new Intent(MainActivity.this, GetLuckyNumberService.class));
-                button.setMode(ActionProcessButton.Mode.PROGRESS);
-                button.setText("Pobieranie numerka...");
+        button.setOnClickListener(this);
 
-            }
-        });
         checkFirstRun();
+
         initNumberUpdateReceiver(button);
+
     }
 
     private void initProgressView() {
@@ -98,13 +92,17 @@ public class MainActivity extends AppCompatActivity {
             luckyText.setText(String.valueOf(PrefsUtils.getIntFromSharedPreference(getApplicationContext(), PrefsUtils.CURRENT_NUMBER)));
         } else luckyText.setText("-");
         progressView.stop();
+        if ("onupdate".equals(this.getIntent().getStringExtra("com.tomek.luckynumber"))) {
+            button.performClick();
+            Log.d("onResume", getIntent().getStringExtra("com.tomek.luckynumber"));
+        }
         super.onResume();
     }
 
     private void updateLuckyText(int lucky_text) {
         String message = "";
         if (lucky_text < 1) {
-            message = "Nie udało się pobrać numerka";
+            message = "Błąd. Sprawdź sieć";
         } else {
             message = "Numerek : " + lucky_text;
             luckyText.setText(String.valueOf(lucky_text));
@@ -240,4 +238,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onClick(View v) {
+        progressView.start();
+        startService(new Intent(MainActivity.this, GetLuckyNumberService.class));
+        button.setMode(ActionProcessButton.Mode.PROGRESS);
+        button.setText("Pobieranie numerka...");
+    }
 }

@@ -73,7 +73,7 @@ public class GetNumberOnUpdateService extends IntentService {
         Notification notif = null;
 
         Intent activityIntent = new Intent(getApplicationContext(), MainActivity.class);
-        activityIntent.setAction(Long.toString(System.currentTimeMillis()));
+        activityIntent.setAction(Long.toString(System.currentTimeMillis())).putExtra("com.tomek.luckynumber", "onupdate");
         activityIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0,
                 activityIntent, PendingIntent.FLAG_CANCEL_CURRENT);
